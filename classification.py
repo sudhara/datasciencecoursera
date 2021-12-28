@@ -34,6 +34,7 @@ chart_visual = st.sidebar.selectbox('Select Charts/Plot type', ('Line Chart', 'B
 st.sidebar.checkbox("Show Analysis by Occupation", True, key=1)
 selected_status = st.sidebar.selectbox('Select Occupation', options=data['JOB'].nunique())
 
-fig = go.Figure()
 if chart_visual == 'Box Chart':
-    fig.add_trace(go.box(data, x="JOB", y="LOAN"))
+    fig=go.box(data, x="JOB", y="LOAN")
+    fig.show()
+
