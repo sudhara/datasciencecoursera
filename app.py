@@ -1,15 +1,79 @@
 import streamlit as st
-number = st.slider("Pick a number",0,100)
 
-# radio button
-# first argument is the title of the radio button
-# second argument is the options for the ratio button
-status = st.radio("Select Gender: ", ('Male', 'Female'))
+# Custom imports
+from multipage import MultiPage
+from pages import data_upload, machine_learning, metadata, data_visualize, redundant, inference # import your pages here
 
-# conditional statement to print
-# Male if male is selected else print female
-# show the result using the success function
-if (status == 'Male'):
-    st.success("Male")
-else:
-    st.success("Female")
+import collections
+from numpy.core.defchararray import lower
+import streamlit as st
+import numpy as np
+import pandas as pd
+from pages import utils
+
+
+def app():
+    st.markdown("## Data Upload")
+
+    # Upload the dataset and save as csv
+    st.markdown("### Upload a csv file for analysis.")
+    st.write("\n")
+
+    # Code to read a single file
+    uploaded_file = st.file_uploader("Choose a file", type=['csv', 'xlsx'])
+    global data
+    if uploaded_file is not None:
+        try:
+            data = pd.read_csv(uploaded_file)
+        except Exception as e:
+            print(e)
+            data = pd.read_excel(uploaded_file)
+
+    ''' Load the data and save the columns with categories as a dataframe. 
+    This section also allows changes in the numerical and categorical columns. '''
+    if st.button("Load Data"):
+
+        # Raw data
+        st.dataframe(data)
+        data.to_csv('data/main_data.csv', index=False)
+
+        # Collect the categorical and numerical columns
+
+        numeric_cols = data.select_dtypes(include=np.number).columns.tolist()
+        categorical_cols = list(set(list(data.columns)) - set(numeric_cols))
+
+        # Save the columns as a dataframe or dictionary
+        columns = []
+
+        # Iterate through the numerical and categorical columns and save in columns
+        columns = utils.genMetaData(data)
+
+        # Save the columns as a dataframe with categories
+        # Here column_name is the name of the field and the type is whether it's numerical or categorical
+        columns_df = pd.DataFrame(columns, columns=['column_name', 'type'])
+        columns_df.to_csv('data/metadata/column_type_desc.csv', index=False)
+
+        # Display columns
+        st.markdown("**Column Name**-**Type**")
+        for i in range(columns_df.shape[0]):
+            st.write(f"{i + 1}. **{columns_df.iloc[i]['column_name']}** - {columns_df.iloc[i]['type']}")
+
+        st.markdown("""The above are the automated column types detected by the application in the data. 
+        In case you wish to change the column types, head over to the **Column Change** section. """)
+
+
+# Create an instance of the app
+app = MultiPage()
+
+# Title of the main page
+st.title("Data Storyteller Application")
+
+# Add all your applications (pages) here
+app.add_page("Upload Data", data_upload.app)
+app.add_page("Change Metadata", metadata.app)
+app.add_page("Machine Learning", machine_learning.app)
+app.add_page("Data Analysis",data_visualize.app)
+app.add_page("Y-Parameter Optimization",redundant.app)
+
+# The main app
+app.run()

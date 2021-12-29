@@ -14,12 +14,22 @@ import warnings
 warnings.filterwarnings('ignore')
 import streamlit as st
 import plotly.express as go
+import seaborn as sns
+
+st.set_page_config(layout="wide")
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
 data=pd.read_csv("hmeq.csv")
+# Create an instance of the app
 
 st.title("Classification Problem")
 st.header('Data Exploration')
+
 st.write(data)
+
+col1 = st.columns(1)
+col3, col4 = st.columns(2)
+col5 = st.columns(1)
 
 data['JOB'] = data['JOB'].fillna('Other')
 cols = data.select_dtypes(['object']).columns.tolist()
@@ -29,12 +39,29 @@ for i in cols:
 
 st.sidebar.title("Select Visual Charts")
 st.sidebar.markdown("Select the Charts/Plots accordingly:")
-chart_visual = st.sidebar.selectbox('Select Charts/Plot type', ('Line Chart', 'Bar Chart', 'Box Chart'))
+chart_visual = st.sidebar.selectbox('Select Charts/Plot type', ('Line Chart', 'Bar Chart', 'Box Chart', 'Histogram'))
 
 st.sidebar.checkbox("Show Analysis by Occupation", True, key=1)
-selected_status = st.sidebar.selectbox('Select Occupation', options=data['JOB'].nunique())
+selected_job = st.sidebar.selectbox('Select Occupation', options=data['JOB'].unique())
 
-if chart_visual == 'Box Chart':
-    fig=go.box(data, x="JOB", y="LOAN")
-    fig.show()
+if st.sidebar.button("Generate"):
+    if chart_visual == 'Box Chart':
+        st.write(sns.boxplot(x="JOB", y="LOAN", palette="husl", data=data))
+        st.pyplot()
 
+    if chart_visual == 'Bar Chart':
+        data_bar = pd.DataFrame(data['JOB'] == selected_job)
+        st.write(sns.barplot(data_bar, y = data_bar.groupby('YOJ').count(), x=data_bar['YOJ'].unique()))
+        st.pyplot()
+
+    if chart_visual == 'Line Chart':
+        data_line = pd.DataFrame(data['JOB'] == selected_job)
+        st.write(sns.lineplot(data_line,y='MORTDUE'))
+        st.pyplot()
+
+    if chart_visual== 'Histogram':
+        data_hist = pd.DataFrame(data[:],columns=['BAD','LOAN','MORTDUE'])
+        st.write(sns.histplot(data=data_hist, x='LOAN', kde=True))
+        st.pyplot()
+        st.write(sns.histplot(data=data_hist, x='MORTDUE', kde=True))
+        st.pyplot()
